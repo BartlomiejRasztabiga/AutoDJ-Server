@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+    <title>socket io test</title>
+</head>
+<body>
+<form id="vote-form" action="">
+    <input id="vote" autocomplete="off" title="vote"/>
+    <button>Send</button>
+</form>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+    $(function () {
+        var socket = io();
+        $('#vote-form').submit(function () {
+            socket.emit('vote message', $('#vote').val());
+            $('#vote').val('');
+            return false;
+        });
+    });
+</script>
+</body>
+</html>
