@@ -1,16 +1,47 @@
+var cors = require('cors');
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var request = require('request');
 
-const SpotifyWebHelper = require('spotify-web-helper');
-const helper = SpotifyWebHelper();
+var client_id = '47f899fb8664419689f4130816c42aaa';
+var client_secret = '421a970c39a64c249009c529e8ba3a0a';
+
+var authOptions = {
+    url: 'https://accounts.spotify.com/api/token',
+    headers: {
+        'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64'))
+    },
+    form: {
+        grant_type: 'client_credentials'
+    },
+    json: true
+};
+
+app.use(cors())
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
 
-http.listen(3000, function () {
-    console.log('listening on *:3000');
+app.get('/token', function (req, res) {
+    res.setHeader('Content-Type', 'application/json');
+
+    request.post(authOptions, function(error, response, body) {
+        if (!error && response.statusCode === 200) {
+
+            // use the access token to access the Spotify Web API
+            var token = body.access_token;
+            res.send(JSON.stringify({
+                access_token: token
+            }))
+        }
+    });
+
+});
+
+http.listen(5280, function () {
+    console.log('listening on *:5280');
 });
 
 io.on('connection', function (socket) {
@@ -24,12 +55,4 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function () {
         console.log('user disconnected');
     });
-});
-
-helper.player.on('error', function (err) {
-    if (err.message.match(/No user logged in/)) {
-        // also fires when Spotify client quits
-    } else {
-        // other errors: /Cannot start Spotify/ and /Spotify is not installed/
-    }
 });
